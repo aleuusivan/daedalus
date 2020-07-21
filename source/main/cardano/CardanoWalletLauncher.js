@@ -36,6 +36,7 @@ export type WalletOpts = {
   nodeLogFile: WriteStream,
   walletLogFile: WriteStream,
   cliBin: string,
+  isStaging: boolean
 };
 
 export async function CardanoWalletLauncher(walletOpts: WalletOpts): Launcher {
@@ -53,6 +54,7 @@ export async function CardanoWalletLauncher(walletOpts: WalletOpts): Launcher {
     nodeLogFile,
     walletLogFile,
     cliBin,
+    isStaging,
   } = walletOpts;
   // TODO: Update launcher config to pass number
   const syncToleranceSeconds = parseInt(syncTolerance.replace('s', ''), 10);
@@ -149,9 +151,13 @@ export async function CardanoWalletLauncher(walletOpts: WalletOpts): Launcher {
           logger.error(`Copying ${cluster} genesis file failed`, { error });
         }
       }
-      if (cluster !== MAINNET) {
-        // All clusters except for Mainnet are treated as "Stagings"
+      if (isStaging) {
         launcherConfig.networkName = STAGING;
+      } else if (cluster == MAINNET) {
+        launcherConfig.networkName = MAINNET;
+      } else {
+        // All clusters except for Mainnet are treated as "Testnets"
+        launcherConfig.networkName = TESTNET;
       }
       merge(launcherConfig, { nodeConfig, tlsConfiguration });
       break;
